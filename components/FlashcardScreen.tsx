@@ -2,15 +2,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { dsm5Data } from '../data/dsm5Data';
 import { big5Data } from '../data/big5Data';
+import { bodyLanguageConcepts } from '../data/bodyLanguageData';
 import { useLeitnerSystem } from '../hooks/useLeitnerSystem';
 import { Flashcard } from '../types';
 import Spinner from './Spinner';
 
-const deckNames = [...Object.keys(dsm5Data), ...Object.keys(big5Data)];
+const dsm5Decks = Object.keys(dsm5Data);
+const big5Decks = Object.keys(big5Data);
+const bodyLanguageDecks = Object.keys(bodyLanguageConcepts);
 
 const FlashcardScreen: React.FC = () => {
     const [activeDeck, setActiveDeck] = useState<string | null>(null);
     const [sessionCards, setSessionCards] = useState<Flashcard[]>([]);
+    const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const { getDeckStats, generateNewCardsForDeck, getStudySession, isLoading, allDecks } = useLeitnerSystem();
     
     const handleStartSession = (deckName: string) => {
@@ -42,6 +46,34 @@ const FlashcardScreen: React.FC = () => {
         );
     }
 
+    const toggleSection = (section: string) => {
+        setExpandedSection(expandedSection === section ? null : section);
+    };
+
+    const renderDeckCard = (deckName: string) => {
+        const stats = getDeckStats(deckName);
+        const hasDueCards = stats.dueCount > 0 || stats.newCount > 0;
+        return (
+            <div key={deckName} className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between transition hover:shadow-lg">
+                <div>
+                    <h3 className="text-lg font-bold text-gray-800">{deckName}</h3>
+                    <div className="text-xs text-gray-500 mt-2 space-y-1">
+                        <p>Total: <span className="font-semibold">{stats.total}</span></p>
+                        <p>Due: <span className="font-semibold text-amber-600">{stats.dueCount}</span> | New: <span className="font-semibold text-blue-600">{stats.newCount}</span></p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => handleStartSession(deckName)}
+                    disabled={isLoading}
+                    className={`mt-3 w-full flex justify-center items-center gap-2 text-sm font-bold py-2 px-3 rounded-lg shadow-md transition ${!hasDueCards && stats.total > 0 ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                >
+                    {isLoading && <Spinner/>}
+                    {stats.total === 0 ? 'Load Cards' : (hasDueCards ? 'Study' : 'Done')}
+                </button>
+            </div>
+        );
+    };
+
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
@@ -49,32 +81,76 @@ const FlashcardScreen: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900">Flashcard Decks</h1>
                     <p className="text-gray-600 mt-2">Select a deck to begin a spaced repetition session. The Leitner system helps you study more efficiently by showing you cards right before you're about to forget them.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {deckNames.map(deckName => {
-                        const stats = getDeckStats(deckName);
-                        const hasDueCards = stats.dueCount > 0 || stats.newCount > 0;
-                        return (
-                            <div key={deckName} className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between transition hover:shadow-xl hover:scale-105">
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-800">{deckName}</h2>
-                                    <div className="text-sm text-gray-500 mt-4 space-y-1">
-                                        <p>Total Cards: <span className="font-semibold">{stats.total}</span></p>
-                                        <p>Learned: <span className="font-semibold text-green-600">{stats.learnedCount}</span></p>
-                                        <p>Due for Review: <span className="font-semibold text-amber-600">{stats.dueCount}</span></p>
-                                        <p>New: <span className="font-semibold text-blue-600">{stats.newCount}</span></p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleStartSession(deckName)}
-                                    disabled={isLoading}
-                                    className={`mt-6 w-full flex justify-center items-center gap-2 font-bold py-2 px-4 rounded-lg shadow-md transition ${!hasDueCards && stats.total > 0 ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                                >
-                                    {isLoading && <Spinner/>}
-                                    {stats.total === 0 ? 'Generate & Study' : (hasDueCards ? 'Start Studying' : 'All Done!')}
-                                </button>
+                
+                <div className="space-y-4">
+                    {/* DSM-5 Section */}
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('dsm5')}
+                            className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 transition-colors"
+                        >
+                            <h2 className="text-xl font-bold text-gray-800">DSM-5 Disorders</h2>
+                            <svg 
+                                className={`h-5 w-5 transition-transform ${expandedSection === 'dsm5' ? 'rotate-90' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        {expandedSection === 'dsm5' && (
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {dsm5Decks.map(deckName => renderDeckCard(deckName))}
                             </div>
-                        )
-                    })}
+                        )}
+                    </div>
+
+                    {/* Big-5 Section */}
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('big5')}
+                            className="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 transition-colors"
+                        >
+                            <h2 className="text-xl font-bold text-gray-800">Big-5 Personality Traits</h2>
+                            <svg 
+                                className={`h-5 w-5 transition-transform ${expandedSection === 'big5' ? 'rotate-90' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        {expandedSection === 'big5' && (
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {big5Decks.map(deckName => renderDeckCard(deckName))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Body Language Section */}
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('bodyLanguage')}
+                            className="w-full flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 transition-colors"
+                        >
+                            <h2 className="text-xl font-bold text-gray-800">Body Language Concepts</h2>
+                            <svg 
+                                className={`h-5 w-5 transition-transform ${expandedSection === 'bodyLanguage' ? 'rotate-90' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        {expandedSection === 'bodyLanguage' && (
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {bodyLanguageDecks.map(deckName => renderDeckCard(deckName))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
