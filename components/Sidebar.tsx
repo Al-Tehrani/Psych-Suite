@@ -72,8 +72,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeScreen, setActiveScreen }) => {
     return (
         <aside className="w-20 md:w-64 bg-gray-800 text-white flex flex-col flex-shrink-0">
             <div className="h-20 flex items-center justify-center border-b border-gray-700 px-4">
-                <h1 className="text-xl font-bold hidden md:block">Psychopathology Suite</h1>
-                <img src="https://img.icons8.com/fluency/48/brain.png" alt="Logo" className="md:hidden h-10 w-10"></img>
+                <button
+                    onClick={() => setActiveScreen(SCREENS.WELCOME)}
+                    className={`flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer w-full ${
+                        activeScreen === SCREENS.WELCOME ? 'opacity-100' : 'opacity-90'
+                    }`}
+                >
+                    <h1 className={`text-xl font-bold hidden md:block ${activeScreen === SCREENS.WELCOME ? 'text-white' : 'text-gray-300'}`}>Psych Suite</h1>
+                    <img 
+                        src="https://img.icons8.com/fluency/48/brain.png" 
+                        alt="Logo" 
+                        className={`md:hidden h-10 w-10 ${activeScreen === SCREENS.WELCOME ? 'opacity-100' : 'opacity-75'}`}
+                    />
+                </button>
             </div>
             <nav className="flex-1 px-2 md:px-4 py-4 overflow-y-auto">
                 {/* Learn Section */}

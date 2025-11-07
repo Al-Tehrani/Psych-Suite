@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Screen } from './types';
 import { SCREENS } from './constants';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import Sidebar from './components/Sidebar';
+import WelcomeScreen from './components/WelcomeScreen';
 import DSMLearnScreen from './components/DSMLearnScreen';
 import DSMPracticeScreen from './components/DSMPracticeScreen';
 import Big5LearnScreen from './components/Big5LearnScreen';
@@ -18,10 +19,21 @@ import FlashcardScreen from './components/FlashcardScreen';
 
 const AppContent: React.FC = () => {
     const { currentUser } = useAuth();
-    const [activeScreen, setActiveScreen] = useState<Screen>(SCREENS.DSM_LEARN);
+    const [activeScreen, setActiveScreen] = useState<Screen>(SCREENS.WELCOME);
+    const prevUserRef = useRef<string | null>(null);
+
+    // Reset to welcome screen whenever user signs in (when currentUser changes from null to a value)
+    useEffect(() => {
+        if (currentUser && !prevUserRef.current) {
+            setActiveScreen(SCREENS.WELCOME);
+        }
+        prevUserRef.current = currentUser;
+    }, [currentUser]);
 
     const renderScreen = () => {
         switch (activeScreen) {
+            case SCREENS.WELCOME:
+                return <WelcomeScreen setActiveScreen={setActiveScreen} />;
             case SCREENS.DSM_LEARN:
                 return <DSMLearnScreen />;
             case SCREENS.DSM_PRACTICE:
@@ -43,7 +55,7 @@ const AppContent: React.FC = () => {
             case SCREENS.FLASHCARDS:
                 return <FlashcardScreen />;
             default:
-                return <DSMLearnScreen />;
+                return <WelcomeScreen setActiveScreen={setActiveScreen} />;
         }
     };
 

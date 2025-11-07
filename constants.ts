@@ -1,5 +1,6 @@
 
 export const SCREENS = {
+    WELCOME: 'welcome',
     DSM_LEARN: 'dsm-learn',
     DSM_PRACTICE: 'dsm-practice',
     DSM_RETRIEVAL: 'dsm-retrieval',
